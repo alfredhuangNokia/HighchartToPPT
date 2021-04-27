@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.5.0/dist/pptxgen.bundle.js"></script>
+</head>
+
+<body>
+    <button id="export">Get images</button>
+    <button id="exportAsPpt">
+        Export As PPT
+    </button>
+    <div id="container"></div>
+</body>
+<script>
+    $("#exportAsPpt").click(function (event) {
+        /*
+              Reference: https://gitbrent.github.io/PptxGenJS/docs/api-images.html#image-options
+        */
+        var pptx = new PptxGenJS();
+        var slide = pptx.addNewSlide();
+        var opts = { x: 1.0, y: 1.0, fontSize: 42, color: '00FF00' };
+        slide.addImage({ data: dataURL, x: 1, y: 1, w: 8, h: 4 });
+        pptx.save();
+    });
+
+    testUrl = ''
+
+    var chartOptions = {
+        exporting: {
+            url: 'http://export.highcharts.com/'
+        },
+        xAxis: {
+            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        },
+        series: [{
+            data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
+        }]
+    };
+
+    $('#export').click(function () {
+        var obj = {
+            options: JSON.stringify(chartOptions),
+            type: 'image/png',
+            async: true
+        },
+            exportUrl = chartOptions.exporting.url,
+            imgContainer = $("#container");
+
+        var calls = [];
+
+        for (var i = 0; i < 4; i++) {
+            calls.push({
+                type: 'post',
+                url: exportUrl,
+                data: obj,
+            });
+        }
+
+        $.when(
+            $.ajax(calls[0]),
+            $.ajax(calls[1]),
+            $.ajax(calls[2]),
+            $.ajax(calls[3])
+        ).done(function (c1, c2, c3, c4) {
+            var pptx = new PptxGenJS();
+            // var slide = pptx.addNewSlide();
+            var urls = [];
+            $.each(arguments, function (i, chart) {
+                console.log(exportUrl, '+++', chart[0])
+                $('<img>').attr('src', exportUrl + chart[0]).attr('width', '250px').appendTo(imgContainer);
+                $('<a>or Download Here</a>').attr('href', exportUrl + chart[0]).appendTo(imgContainer);
+                urls.push(exportUrl + chart[0]);
+                slide = pptx.addNewSlide();
+                slide = pptx.addNewSlide();
+                slide.addImage({  path: urls[i], x: 1, y: 1, w: 8, h: 4 });
+                // slide = pptx.addNewSlide();
+                
+
+                /*
+                    Here you can send URL's to the backend:
+                    
+                    $.post("url/to/backend", urls, function(data) {
+                        console.log(data);
+                    })
+                
+                */
+
+            });
+            pptx.writeFile("Sample Presentation.pptx");
+        });
+
+
+    });
+</script>
+
+</html>
